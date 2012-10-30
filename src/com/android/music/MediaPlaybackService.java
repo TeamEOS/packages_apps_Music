@@ -47,6 +47,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.PowerManager.WakeLock;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -1085,10 +1086,12 @@ public class MediaPlaybackService extends Service {
     }
 
     private void setNextTrack() {
-        mNextPlayPos = getNextPosition(false);
-        if (mNextPlayPos >= 0) {
-            long id = mPlayList[mNextPlayPos];
-            mPlayer.setNextDataSource(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI + "/" + id);
+        if(SystemProperties.getBoolean("gapless.audio.decode", false)) {
+            mNextPlayPos = getNextPosition(false);
+            if (mNextPlayPos >= 0) {
+                long id = mPlayList[mNextPlayPos];
+                mPlayer.setNextDataSource(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI + "/" + id);
+            }
         }
     }
 
