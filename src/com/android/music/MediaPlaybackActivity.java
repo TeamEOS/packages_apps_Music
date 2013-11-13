@@ -87,6 +87,7 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     private Toast mToast;
     private int mTouchSlop;
     private ServiceToken mToken;
+    private boolean mReceiverUnregistered = false;
 
     public MediaPlaybackActivity()
     {
@@ -461,8 +462,11 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     @Override
     public void onStop() {
         paused = true;
-        mHandler.removeMessages(REFRESH);
-        unregisterReceiver(mStatusListener);
+        if (!mReceiverUnregistered) {
+            mHandler.removeMessages(REFRESH);
+            unregisterReceiver(mStatusListener);
+        }
+        unregisterReceiver(mScreenTimeoutListener);
         MusicUtils.unbindFromService(mToken);
         mService = null;
         super.onStop();
@@ -472,7 +476,6 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
     public void onStart() {
         super.onStart();
         paused = false;
-
         mToken = MusicUtils.bindToService(this, osc);
         if (mToken == null) {
             // something went wrong
@@ -482,7 +485,13 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
         IntentFilter f = new IntentFilter();
         f.addAction(MediaPlaybackService.PLAYSTATE_CHANGED);
         f.addAction(MediaPlaybackService.META_CHANGED);
-        registerReceiver(mStatusListener, new IntentFilter(f));
+        registerReceiver(mStatusListener, f);
+
+        IntentFilter s = new IntentFilter();
+        s.addAction(Intent.ACTION_SCREEN_ON);
+        s.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(mScreenTimeoutListener, s);
+
         updateTrackInfo();
         long next = refreshNow();
         queueNextRefresh(next);
@@ -1253,6 +1262,32 @@ public class MediaPlaybackActivity extends Activity implements MusicUtils.Defs,
                 queueNextRefresh(1);
             } else if (action.equals(MediaPlaybackService.PLAYSTATE_CHANGED)) {
                 setPauseButtonImage();
+            }
+        }
+    };
+
+    private BroadcastReceiver mScreenTimeoutListener = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                if (mReceiverUnregistered) {
+                    IntentFilter f = new IntentFilter();
+                    f.addAction(MediaPlaybackService.PLAYSTATE_CHANGED);
+                    f.addAction(MediaPlaybackService.META_CHANGED);
+                    registerReceiver(mStatusListener, f);
+                    mReceiverUnregistered = false;
+                }
+                updateTrackInfo();
+                long next = refreshNow();
+                queueNextRefresh(next);
+            } else if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                paused = false;
+
+                if (!mReceiverUnregistered) {
+                    mHandler.removeMessages(REFRESH);
+                    unregisterReceiver(mStatusListener);
+                    mReceiverUnregistered = true;
+                }
             }
         }
     };
