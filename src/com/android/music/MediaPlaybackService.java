@@ -958,7 +958,7 @@ public class MediaPlaybackService extends Service {
             RemoteControlClient.MetadataEditor ed = mRemoteControlClient.editMetadata(true);
             ed.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, getTrackName());
             ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, getAlbumName());
-            ed.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, getArtistName());
+            ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST, getArtistName());
             ed.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration());
             Bitmap b = MusicUtils.getArtwork(this, getAudioId(), getAlbumId(), false);
             if (b != null) {
@@ -1314,13 +1314,6 @@ public class MediaPlaybackService extends Service {
         mAudioManager.registerRemoteControlClient(mRemoteControlClient);
 
         if (mPlayer.isInitialized()) {
-            // if we are at the end of the song, go to the next song first
-            long duration = mPlayer.duration();
-            if (mRepeatMode != REPEAT_CURRENT && duration > 2000 &&
-                mPlayer.position() >= duration - 2000) {
-                gotoNext(true);
-            }
-
             mPlayer.start();
             // make sure we fade in, in case a previous fadein was stopped because
             // of another focus loss
