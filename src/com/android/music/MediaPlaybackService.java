@@ -960,6 +960,12 @@ public class MediaPlaybackService extends Service {
             ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, getAlbumName());
             ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST, getArtistName());
             ed.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration());
+            ed.putLong(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER, mPlayPos);
+            try {
+                ed.putLong(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS, mPlayListLen);
+            } catch (IllegalArgumentException e) {
+                Log.e(LOGTAG, "METADATA_KEY_NUM_TRACKS: failed: " + e);
+            }
             Bitmap b = MusicUtils.getArtwork(this, getAudioId(), getAlbumId(), false);
             if (b != null) {
                 ed.putBitmap(MetadataEditor.BITMAP_KEY_ARTWORK, b);
