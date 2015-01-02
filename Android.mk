@@ -8,6 +8,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 
 LOCAL_PACKAGE_NAME := Music
 
+LOCAL_OVERRIDES_PACKAGES := Eleven
+
 LOCAL_SDK_VERSION := current
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
